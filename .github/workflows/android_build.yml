@@ -2,16 +2,14 @@ name: Build Elara APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
-    name: Build APK using Buildozer
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -19,54 +17,27 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt update
           sudo apt install -y \
-            python3-pip \
-            python3-setuptools \
-            zip unzip \
-            openjdk-17-jdk \
-            libffi-dev \
-            libssl-dev \
-            libz-dev \
-            libncurses5 \
-            libsqlite3-dev \
-            git \
-            libjpeg-dev \
-            build-essential \
-            libbz2-dev \
-            libreadline-dev \
-            liblzma-dev \
-            zlib1g-dev \
-            libncursesw5-dev \
-            libgdbm-dev \
-            libnss3-dev \
-            libtk8.6 \
-            libdb-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxrandr-dev \
-            libxinerama-dev \
-            libgl1-mesa-dev \
-            libgles2-mesa-dev \
-            libsdl2-dev \
-            libmtdev-dev \
-            xclip \
-            libxss1 \
+            git zip unzip openjdk-17-jdk \
+            libncurses5 libffi-dev libssl-dev \
+            libz-dev python3-pip python3-setuptools \
+            build-essential libjpeg-dev \
+            libsqlite3-dev zlib1g-dev \
             pkg-config
 
-          python3 -m pip install --upgrade pip
-          pip install buildozer cython
+      - name: Install Buildozer & dependencies
+        run: |
+          pip install --upgrade pip
+          pip install cython buildozer
 
       - name: Build APK
         run: |
           buildozer android debug
 
-      - name: List APK output
-        run: ls -l bin/
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: elara-apk
