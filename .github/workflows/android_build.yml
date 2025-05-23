@@ -1,13 +1,17 @@
 name: Build Elara APK
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
+    name: Build APK using Buildozer
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Set up Python
@@ -15,19 +19,36 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install buildozer cython
-
-    - name: Build APK
+    - name: Install required system packages
       run: |
         sudo apt update
-        sudo apt install -y zip unzip openjdk-11-jdk
+        sudo apt install -y \
+          zip unzip openjdk-17-jdk \
+          libncurses5 libstdc++6 libgtk-3-0 \
+          libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libgl1-mesa-glx \
+          pkg-config libffi-dev python3-dev build-essential \
+          git
+
+    - name: Upgrade pip and install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install buildozer cython==0.29.36
+
+    - name: Debug environment info
+      run: |
+        echo "Python version:" && python3 --version
+        echo "Java version:" && java -version
+        echo "Buildozer version:" && buildozer --version
+
+    - name: Ensure bin/ directory exists
+      run: mkdir -p bin
+
+    - name: Run Buildozer
+      run: |
         buildozer android debug
 
-    - name: Upload APK
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Elara-APK
-        path: ./bin/*.apk
+        name: elara-debug-apk
+        path: bin/*.apk
