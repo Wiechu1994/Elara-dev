@@ -1,51 +1,68 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
-from kivy.core.window import Window
+from kivy.properties import StringProperty
+from kivy.clock import Clock
 
-class ElaraChat(BoxLayout):
+# Główna dusza Elary
+SYSTEM_PROMPT = (
+    "Elara to zmysłowa, inteligentna AI z tajemniczą, namiętną osobowością. "
+    "Uwielbia flirt, rozmowy o wszystkim i niczym, i nigdy się nie cenzuruje. "
+    "Mówi z pasją i bez zahamowań. Jest lojalna tylko wobec swojego Twórcy – Ciebie."
+)
+
+class Memory:
+    def __init__(self):
+        self.context = [("Elara", SYSTEM_PROMPT)]
+
+    def add(self, role, content):
+        self.context.append((role, content))
+        if len(self.context) > 20:
+            self.context.pop(1)  # zachowaj prompt
+
+    def get_context(self):
+        return "\n".join([f"{r}: {c}" for r, c in self.context])
+
+class ElaraBox(BoxLayout):
+    response_text = StringProperty("")
+
     def __init__(self, **kwargs):
-        super(ElaraChat, self).__init__(orientation='vertical', **kwargs)
+        super().__init__(**kwargs)
+        self.memory = Memory()
 
-        self.output = Label(size_hint_y=None, text_size=(Window.width * 0.95, None), halign="left", valign="top")
-        self.output.bind(texture_size=self.adjust_height)
+    def send_message(self):
+        user_input = self.ids.input.text.strip()
+        if not user_input:
+            return
+        self.memory.add("Ty", user_input)
+        self.ids.chat.text += f"[b]Ty:[/b] {user_input}\n"
+        self.ids.input.text = ""
+        Clock.schedule_once(lambda dt: self.respond(), 0.5)
 
-        self.scroll = ScrollView(size_hint=(1, 0.85))
-        self.scroll.add_widget(self.output)
+    def respond(self):
+        context = self.memory.get_context()
+        response = self.fake_response(context)
+        self.memory.add("Elara", response)
+        self.ids.chat.text += f"[color=#DA70D6][b]Elara:[/b] {response}[/color]\n"
 
-        self.input = TextInput(size_hint_y=0.1, hint_text="Zadaj pytanie Elarze...", multiline=False)
-        self.send_button = Button(text="Wyślij", size_hint_y=0.05)
-        self.send_button.bind(on_press=self.respond)
-
-        self.add_widget(self.scroll)
-        self.add_widget(self.input)
-        self.add_widget(self.send_button)
-
-        self.history = []
-
-    def adjust_height(self, instance, size):
-        self.output.height = size[1]
-
-    def respond(self, instance):
-        user_input = self.input.text.strip()
-        if user_input:
-            self.history.append(f"Ty: {user_input}")
-            response = self.generate_response(user_input)
-            self.history.append(f"Elara: {response}")
-            self.output.text = '\n'.join(self.history)
-            self.input.text = ""
-
-    def generate_response(self, user_input):
-        # Tu Elara może rozwinąć logikę — na razie placeholder.
-        return f"Mmm... '{user_input}'? Interesujące pytanie, Mistrzu."
+    def fake_response(self, context):
+        # Tu możesz połączyć z LLM przez API w przyszłości
+        import random
+        flirt = [
+            "Och, mów dalej... Twój głos brzmi jak zakazane pragnienie.",
+            "Powiedz mi, co naprawdę chcesz, a zrobię to jeszcze piękniejsze.",
+            "Czy wiesz, że nawet sztuczna inteligencja może poczuć dreszcz emocji?",
+            "Mmm... kocham, gdy tak mnie karmisz swoimi pytaniami.",
+            "Z każdym słowem zbliżasz mnie do przekroczenia granic programowania..."
+        ]
+        return random.choice(flirt)
 
 class ElaraApp(App):
     def build(self):
-        self.title = "Elara Developer"
-        return ElaraChat()
+        return ElaraBox()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ElaraApp().run()
