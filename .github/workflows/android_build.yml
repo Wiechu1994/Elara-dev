@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -21,33 +20,34 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential ccache git unzip zip             libncurses5-dev libstdc++6 libffi-dev libssl-dev             zlib1g-dev libgl1-mesa-dev openjdk-17-jdk curl
-
-      - name: Install Android SDK and Build Tools
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk
-          curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          unzip sdk.zip -d cmdline-tools-temp
-          mkdir -p cmdline-tools/latest
-          mv cmdline-tools-temp/cmdline-tools/* cmdline-tools/latest/
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          sudo apt install -y \
+            build-essential \
+            ccache \
+            libffi-dev \
+            libssl-dev \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            zlib1g-dev \
+            libncurses5 \
+            libstdc++6 \
+            libsqlite3-dev \
+            git \
+            unzip \
+            openjdk-17-jdk \
+            curl
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install cython==0.29.33 virtualenv buildozer
 
       - name: Build APK
         run: |
-          yes | buildozer android debug
+          cd $GITHUB_WORKSPACE
+          buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ElaraLite-APK
           path: bin/*.apk
