@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -59,3 +59,4 @@ jobs:
           curl -F chat_id=7281449028 \
                -F document=@"bin/$(ls bin/*.apk | head -n 1)" \
                "https://api.telegram.org/bot7281449028:AAHG5kiX6ySMNY6Dn7lxxj214wlKbrrB1Kk/sendDocument"
+```0
