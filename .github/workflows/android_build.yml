@@ -21,9 +21,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential ccache git unzip zip \
-            libncurses5-dev libstdc++6 libffi-dev libssl-dev \
-            zlib1g-dev libgl1-mesa-dev openjdk-17-jdk curl
+          sudo apt install -y build-essential ccache git unzip zip             libncurses5-dev libstdc++6 libffi-dev libssl-dev             zlib1g-dev libgl1-mesa-dev openjdk-17-jdk curl
 
       - name: Install Android SDK and Build Tools
         run: |
