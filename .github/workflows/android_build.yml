@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   build:
@@ -31,29 +30,33 @@ jobs:
             git \
             zip \
             unzip \
-            openjdk-17-jdk \
-            python3-pip \
-            python3-setuptools \
-            libz-dev \
-            libjpeg-dev \
-            libfreetype6-dev \
-            libpng-dev \
+            openjdk-11-jdk \
+            libncurses5 \
+            libstdc++6 \
+            zlib1g-dev \
             libffi-dev \
-            liblzma-dev \
-            libncurses5-dev \
-            libreadline-dev \
-            libsqlite3-dev \
             libssl-dev \
+            libjpeg-dev \
+            libsqlite3-dev \
+            libbz2-dev \
+            libreadline-dev \
+            liblzma-dev \
             autoconf \
             libtool \
             pkg-config \
-            curl \
+            unzip \
+            ccache \
             libyaml-dev \
-            libxml2-dev \
-            libxslt-dev \
-            zlib1g-dev
+            curl
 
-      - name: Install Python deps
+      - name: Install SDK components
+        run: |
+          mkdir -p ~/.android
+          echo "### Accepting licenses ###"
+          yes | sdkmanager --licenses || true
+          sdkmanager "build-tools;33.0.2" "platforms;android-33" "platform-tools"
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install cython
@@ -64,7 +67,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v3
         with:
           name: Elara-APK
           path: bin/*.apk
