@@ -67,4 +67,10 @@ jobs:
       - name: Build APK
         run: |
           buildozer init || true
-          buildozer
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: kivy-apk
+          path: bin/*.apk
