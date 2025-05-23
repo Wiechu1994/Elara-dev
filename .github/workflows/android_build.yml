@@ -50,7 +50,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v5
         with:
           name: elara-debug-apk
           path: bin/*.apk
