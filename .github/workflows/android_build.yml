@@ -27,10 +27,11 @@ jobs:
             git \
             unzip \
             zip \
-            libncurses5 \
+            libncurses6 \
             libstdc++6 \
             libffi-dev \
             libssl-dev \
+            liblzma-dev \
             libgl1-mesa-dev \
             openjdk-17-jdk \
             curl
@@ -38,15 +39,15 @@ jobs:
       - name: Install Android SDK and Build Tools
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          cd $HOME/android-sdk
           curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          unzip sdk.zip -d cmdline-tools
-          mv cmdline-tools/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest
+          unzip sdk.zip -d cmdline-tools/latest
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
+          sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
       - name: Install Python dependencies
         run: |
