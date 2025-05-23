@@ -47,7 +47,8 @@ jobs:
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
           curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          unzip sdk.zip -d latest
+          unzip sdk.zip -d temp
+          mv temp $HOME/android-sdk/cmdline-tools/latest
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
@@ -65,12 +66,5 @@ jobs:
 
       - name: Build APK
         run: |
-          cd ${{ github.workspace }}
           buildozer init || true
-          buildozer android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: kivy-apk
-          path: bin/*.apk
+          buildozer
