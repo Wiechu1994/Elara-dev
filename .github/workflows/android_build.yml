@@ -1,9 +1,6 @@
 name: Build Elara APK
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+on: [push]
 
 jobs:
   build:
@@ -13,19 +10,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y python3-pip python3-setuptools zip unzip openjdk-17-jdk
-        pip3 install --user buildozer cython
+        python -m pip install --upgrade pip
+        pip install buildozer cython
 
-    - name: Build the APK
+    - name: Build APK
       run: |
-        export PATH=$HOME/.local/bin:$PATH
-        buildozer -v android debug
+        sudo apt update
+        sudo apt install -y zip unzip openjdk-11-jdk
+        buildozer android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
-        name: elara-debug-apk
-        path: bin/*.apk
+        name: Elara-APK
+        path: ./bin/*.apk
