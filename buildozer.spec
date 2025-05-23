@@ -1,51 +1,57 @@
-[app]
-title = Elara
-package.name = elara
-package.domain = org.elara.dev
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-version = 0.1
-requirements = python3,kivy
-orientation = portrait
-fullscreen = 1
-osx.python_version = 3
-osx.kivy_version = 2.1.0
+name: Build APK
 
-[buildozer]
-log_level = 2
-warn_on_root = 1
+on: push: branches: - master
 
-[app.android]
-android.api = 33
-android.minapi = 21
-android.sdk = 24
-android.ndk = 23b
-android.ndk_path = /home/runner/.buildozer/android/platform/ndk
-android.private_storage = 1
-android.permissions = INTERNET
-android.archs = armeabi-v7a, arm64-v8a
-android.allow_backup = 1
-android.require_android = 21
+jobs: build_apk: name: Build APK using Buildozer runs-on: ubuntu-latest
 
-[app.android.ndk]
-# Optional: extra flags to avoid missing symbols
-# ndk_platform = android-21
+steps:
+  - name: Checkout repo
+    uses: actions/checkout@v3
 
-[app.android.p4a]
-p4a.branch = stable
+  - name: Set up Python
+    uses: actions/setup-python@v4
+    with:
+      python-version: "3.10"
 
-[app.android.packaging]
-# Optional: increase timeout for large builds
-timeout = 600
+  - name: Install system dependencies
+    run: |
+      sudo apt update
+      sudo apt install -y \
+        zip \
+        unzip \
+        git \
+        ccache \
+        build-essential \
+        libffi-dev \
+        libssl-dev \
+        liblzma-dev \
+        libjpeg-dev \
+        zlib1g-dev \
+        libgl1-mesa-dev \
+        libncursesw5 \
+        openjdk-17-jdk \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel
 
-[app.android.setuptools]
-# Optional: if custom modules are needed
+  - name: Install Android SDK
+    run: |
+      mkdir -p $HOME/android-sdk/cmdline-tools
+      cd $HOME/android-sdk/cmdline-tools
+      curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+      unzip sdk.zip -d latest
+      echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+      echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+      echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+      yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+      $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+        "platform-tools" \
+        "platforms;android-31" \
+        "build-tools;33.0.2"
 
-[app.android.whitelist]
-# If needed, specify domains for network requests
+  - name: Install Python deps
+    run: |
+      python -m pip install --upgrade pip
+      pip install cython virtualenv buildozer
 
-[app.android.additional_dependencies]
-# Optional: add here
-
-[app.android.meta_data]
-# Optional: metadata to insert in manifest
+  - name: Build
