@@ -53,9 +53,3 @@ jobs:
         with:
           name: ElaraLite-APK
           path: bin/*.apk
-
-      - name: Send APK to Telegram
-        run: |
-          curl -F chat_id=7281449028 \
-               -F document=@"bin/$(ls bin/*.apk | head -n 1)" \
-               "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendDocument"
