@@ -8,18 +8,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential ccache git unzip zip \
+            libncurses5-dev libstdc++6 libffi-dev libssl-dev \
+            zlib1g-dev libgl1-mesa-dev openjdk-17-jdk
+          pip install --upgrade pip
+          pip install cython==0.29.33 virtualenv buildozer
 
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          command: buildozer android debug
-          buildozer_version: stable
+        run: |
+          buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v2
         with:
-          name: elara-apk
+          name: ElaraLite-APK
           path: bin/*.apk
