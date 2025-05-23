@@ -11,29 +11,36 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt update
           sudo apt install -y \
             build-essential ccache git unzip zip \
             libncurses5-dev libstdc++6 libffi-dev libssl-dev \
             zlib1g-dev libgl1-mesa-dev openjdk-17-jdk
-          pip install --upgrade pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
           pip install cython==0.29.33 virtualenv buildozer
 
-      - name: Build with Buildozer
+      - name: Initialize Buildozer
+        run: |
+          buildozer android clean
+
+      - name: Build APK
         run: |
           buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ElaraLite-APK
           path: bin/*.apk
