@@ -1,33 +1,50 @@
 <ElaraBox>:
     orientation: 'vertical'
-    spacing: 5
-    padding: 10
+    padding: 20
+    spacing: 15
+
+    canvas.before:
+        Color:
+            rgba: 0.1, 0.1, 0.15, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
     ScrollView:
-        size_hint_y: 0.85
+        size_hint: (1, 0.75)
         do_scroll_x: False
-        do_scroll_y: True
 
         Label:
             id: chat
             text: ""
             markup: True
-            font_size: 16
-            text_size: self.width, None
+            text_size: self.width - 20, None
             size_hint_y: None
             height: self.texture_size[1]
+            valign: 'top'
+            font_size: 16
+            color: 1, 1, 1, 1
+            padding: 10, 10
 
-    BoxLayout:
-        size_hint_y: 0.15
-        spacing: 5
+    TextInput:
+        id: input
+        size_hint: (1, 0.1)
+        multiline: False
+        hint_text: "Zadaj pytanie Elarze..."
+        background_normal: ''
+        background_active: ''
+        background_color: 0.2, 0.2, 0.25, 1
+        foreground_color: 1, 1, 1, 1
+        cursor_color: 1, 0.4, 1, 1
+        padding: 10
+        font_size: 16
+        on_text_validate: root.send_message()
 
-        TextInput:
-            id: input
-            multiline: False
-            size_hint_x: 0.8
-            hint_text: "Zadaj pytanie Elarze..."
-
-        Button:
-            text: "Wyślij"
-            size_hint_x: 0.2
-            on_press: root.send_message()
+    Button:
+        text: "Wyślij"
+        size_hint: (1, 0.1)
+        background_color: 0.4, 0.1, 0.5, 1
+        color: 1, 1, 1, 1
+        font_size: 16
+        bold: True
+        on_release: root.send_message()
