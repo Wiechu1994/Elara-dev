@@ -11,27 +11,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y build-essential ccache git zip unzip openjdk-11-jdk python3-pip python3-setuptools python3-venv libz-dev zlib1g-dev
-        pip install --upgrade pip
-        pip install buildozer cython
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            python3-pip \
+            python3-setuptools \
+            zip unzip \
+            openjdk-17-jdk \
+            libffi-dev \
+            libssl-dev \
+            libz-dev \
+            libncurses5 \
+            libsqlite3-dev \
+            git \
+            libjpeg-dev \
+            build-essential \
+            libbz2-dev \
+            libreadline-dev \
+            liblzma-dev \
+            zlib1g-dev \
+            libncursesw5-dev \
+            libgdbm-dev \
+            libnss3-dev \
+            libtk8.6 \
+            libdb-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            libsdl2-dev \
+            libmtdev-dev \
+            xclip \
+            libxss1 \
+            pkg-config
 
-    - name: Build APK
-      run: |
-        buildozer android debug
+          python3 -m pip install --upgrade pip
+          pip install buildozer cython
 
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: elara-apk
-        path: bin/*.apk
+      - name: Build APK
+        run: |
+          buildozer android debug
+
+      - name: List APK output
+        run: ls -l bin/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: elara-apk
+          path: bin/*.apk
