@@ -5,12 +5,14 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   build:
+    name: Build APK using Buildozer
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
 
     steps:
       - name: Checkout repo
@@ -28,30 +30,32 @@ jobs:
             build-essential \
             git \
             zip \
+            unzip \
             openjdk-17-jdk \
             python3-pip \
             python3-setuptools \
-            libncurses5 \
-            libstdc++6 \
-            zlib1g-dev \
-            libffi-dev \
-            libssl-dev \
+            libz-dev \
             libjpeg-dev \
-            libsqlite3-dev \
-            libbz2-dev \
-            libreadline-dev \
+            libfreetype6-dev \
+            libpng-dev \
+            libffi-dev \
             liblzma-dev \
+            libncurses5-dev \
+            libreadline-dev \
+            libsqlite3-dev \
+            libssl-dev \
             autoconf \
             libtool \
             pkg-config \
-            unzip \
-            ccache \
-            libpython3-dev \
-            curl
+            curl \
+            libyaml-dev \
+            libxml2-dev \
+            libxslt-dev \
+            zlib1g-dev
 
       - name: Install Python deps
         run: |
-          python3 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install cython
           pip install buildozer
 
@@ -60,7 +64,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: Elara-APK
           path: bin/*.apk
