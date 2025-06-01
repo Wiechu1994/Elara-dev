@@ -3,22 +3,22 @@ name: Build ElaraLite APK
 on:
   push:
     branches:
-      - main # Zmień na nazwę Twojej głównej gałęzi, jeśli jest inna (np. master, dev)
+      - main # Zmień na nazwę Twojej głównej gałęzi, jeśli jest inna
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Używa najnowszej stabilnej wersji Ubuntu dostarczanej przez GitHub
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository # Krok 1: Pobranie kodu z repozytorium
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python # Krok 2: Konfiguracja środowiska Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # Wersja Pythona. 3.10 jest dobrym wyborem dla Kivy.
+          python-version: '3.10'
 
-      - name: Install system dependencies # Krok 3: Instalacja zależności systemowych Ubuntu
+      - name: Install system dependencies (without openjdk-17-jdk)
         run: |
           sudo apt update
           sudo apt install -y \
@@ -33,53 +33,49 @@ jobs:
             libssl-dev \
             liblzma-dev \
             libgl1-mesa-dev \
-            openjdk-17-jdk \
+            # openjdk-17-jdk Zostało usunięte stąd
             curl
 
-      - name: Install Android SDK and Build Tools # Krok 4: Instalacja Android SDK
+      - name: Set up JDK 17 # NOWY KROK do konfiguracji Javy
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin' # 'temurin' to popularny i zalecany wybór (dawniej AdoptOpenJDK)
+
+      - name: Install Android SDK and Build Tools
         run: |
           # Tworzenie katalogów i pobieranie narzędzi command-line tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          # Używamy konkretnej, znanej działającej wersji command-line tools
-          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+          # Dodano -L do curl dla obsługi przekierowań
+          curl -Lo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
           unzip sdk-tools.zip -d tmp
           mkdir -p latest
           mv tmp/* latest/
-          rm -rf tmp sdk-tools.zip # Sprzątanie pobranych plików tymczasowych
+          rm -rf tmp sdk-tools.zip
 
           # Ustawianie kluczowych zmiennych środowiskowych dla Android SDK
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV # Potrzebne dla niektórych narzędzi
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH # Dodanie sdkmanager do PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH # Dodanie adb, fastboot itp. do PATH
+          # echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV # ANDROID_HOME jest często redundantne, jeśli ANDROID_SDK_ROOT jest ustawione
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-          # Automatyczna akceptacja licencji SDK (ważne dla CI)
-          # oraz instalacja potrzebnych komponentów SDK (platform-tools, platforma Android 33, build-tools 33.0.2)
-          # > /dev/null ukrywa obszerne logi sdkmanager, jeśli nie są potrzebne do debugowania
+          # Automatyczna akceptacja licencji SDK i instalacja potrzebnych komponentów SDK
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" > /dev/null
-        env:
-          # Zapewnienie, że sdkmanager używa poprawnej, zainstalowanej wersji JDK
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        # Usunięto 'env: JAVA_HOME: ...' ponieważ actions/setup-java powinno to skonfigurować globalnie
 
-      - name: Install Python dependencies for Buildozer # Krok 5: Instalacja zależności Pythona (Buildozer i Cython)
+      - name: Install Python dependencies for Buildozer
         run: |
           python -m pip install --upgrade pip
-          # Instalacja Cython (konkretna wersja dla stabilności), virtualenv i buildozer
-          # Wersja Cython 0.29.36 jest generalnie stabilna z Kivy i starszymi zależnościami.
           pip install cython==0.29.36 virtualenv buildozer
 
-      - name: Build APK with Buildozer # Krok 6: Budowanie aplikacji .apk
+      - name: Build APK with Buildozer
         run: |
-          # 'yes |' automatycznie akceptuje ewentualne zapytania od Buildozera podczas budowania
-          # 'android debug' tworzy wersję deweloperską APK
           yes | buildozer android debug
-          # Dla bardziej szczegółowych logów podczas budowania, możesz użyć:
-          # yes | buildozer -v android debug
 
-      - name: Upload APK artifact # Krok 7: Przesłanie zbudowanego pliku .apk jako artefaktu
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ElaraLite-APK # Nazwa artefaktu, który będzie można pobrać
-          path: bin/*.apk # Buildozer domyślnie umieszcza pliki .apk w katalogu 'bin'
+          name: ElaraLite-APK
+          path: bin/*.apk
