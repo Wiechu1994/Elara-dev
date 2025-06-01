@@ -1,24 +1,24 @@
-name: Build APK
+name: Build ElaraLite APK
 
 on:
   push:
     branches:
-      - main
+      - main # Zmień na nazwę Twojej głównej gałęzi, jeśli jest inna (np. master, dev)
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Używa najnowszej stabilnej wersji Ubuntu dostarczanej przez GitHub
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository # Krok 1: Pobranie kodu z repozytorium
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python # Krok 2: Konfiguracja środowiska Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.10' # Wersja Pythona. 3.10 jest dobrym wyborem dla Kivy.
 
-      - name: Install system dependencies
+      - name: Install system dependencies # Krok 3: Instalacja zależności systemowych Ubuntu
         run: |
           sudo apt update
           sudo apt install -y \
@@ -36,32 +36,50 @@ jobs:
             openjdk-17-jdk \
             curl
 
-      - name: Install Android SDK and Build Tools
+      - name: Install Android SDK and Build Tools # Krok 4: Instalacja Android SDK
         run: |
+          # Tworzenie katalogów i pobieranie narzędzi command-line tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
+          # Używamy konkretnej, znanej działającej wersji command-line tools
           curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
           unzip sdk-tools.zip -d tmp
           mkdir -p latest
           mv tmp/* latest/
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          rm -rf tmp sdk-tools.zip # Sprzątanie pobranych plików tymczasowych
 
-      - name: Install Python dependencies
+          # Ustawianie kluczowych zmiennych środowiskowych dla Android SDK
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV # Potrzebne dla niektórych narzędzi
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH # Dodanie sdkmanager do PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH # Dodanie adb, fastboot itp. do PATH
+
+          # Automatyczna akceptacja licencji SDK (ważne dla CI)
+          # oraz instalacja potrzebnych komponentów SDK (platform-tools, platforma Android 33, build-tools 33.0.2)
+          # > /dev/null ukrywa obszerne logi sdkmanager, jeśli nie są potrzebne do debugowania
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" > /dev/null
+        env:
+          # Zapewnienie, że sdkmanager używa poprawnej, zainstalowanej wersji JDK
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+
+      - name: Install Python dependencies for Buildozer # Krok 5: Instalacja zależności Pythona (Buildozer i Cython)
         run: |
           python -m pip install --upgrade pip
-          pip install cython==0.29.33 virtualenv buildozer
+          # Instalacja Cython (konkretna wersja dla stabilności), virtualenv i buildozer
+          # Wersja Cython 0.29.36 jest generalnie stabilna z Kivy i starszymi zależnościami.
+          pip install cython==0.29.36 virtualenv buildozer
 
-      - name: Build APK
+      - name: Build APK with Buildozer # Krok 6: Budowanie aplikacji .apk
         run: |
+          # 'yes |' automatycznie akceptuje ewentualne zapytania od Buildozera podczas budowania
+          # 'android debug' tworzy wersję deweloperską APK
           yes | buildozer android debug
+          # Dla bardziej szczegółowych logów podczas budowania, możesz użyć:
+          # yes | buildozer -v android debug
 
-      - name: Upload APK
+      - name: Upload APK artifact # Krok 7: Przesłanie zbudowanego pliku .apk jako artefaktu
         uses: actions/upload-artifact@v4
         with:
-          name: ElaraLite-APK
-          path: bin/*.apk
+          name: ElaraLite-APK # Nazwa artefaktu, który będzie można pobrać
+          path: bin/*.apk # Buildozer domyślnie umieszcza pliki .apk w katalogu 'bin'
