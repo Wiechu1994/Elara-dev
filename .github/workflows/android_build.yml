@@ -7,100 +7,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Powrót do ubuntu-latest
+    # Używamy obrazu Docker, który ma prekonfigurowane środowisko Buildozer
+    # To omija problemy z ręczną instalacją 32-bitowych zależności
+    container: ghcr.io/kivy/buildozer:stable
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        # Ważne: Jeśli używasz kontenera, checkout musi działać w jego kontekście
+        # Domyślnie actions/checkout działa na hostcie, więc to jest poprawne.
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Install system dependencies
-        run: |
-          set -e
-          sudo apt-get update -qq
-          sudo dpkg --add-architecture i386
-          sudo apt-get update -qq 
-          sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            ccache \
-            git \
-            unzip \
-            zip \
-            libffi-dev \
-            libssl-dev \
-            liblzma-dev \
-            libgl1-mesa-dev \
-            curl \
-            # Zaktualizowane pakiety 32-bitowe dla ubuntu-latest i NDK
-            libc6:i386 \
-            libncurses5:i386 \
-            libstdc++6:i386 \
-            zlib1g:i386 \
-            # Nowe pakiety często wymagane przez NDK na nowych systemach
-            libgmp-dev \
-            libmpfr-dev \
-            libmpc-dev \
-            libxml2-utils \
-            xsltproc \
-            build-essential \
-            python3 \
-            openjdk-11-jdk \
-            python3-pip \
-            python3-setuptools \
-            python3-wheel \
-            pkg-config \
-            libtool \
-            automake \
-            autoconf \
-            libusb-1.0-0-dev \
-            libglu1-mesa-dev \
-            freeglut3-dev \
-            # Dodatkowe 32-bitowe pakiety, które mogą być potrzebne
-            libtinfo5:i386 \
-            lib32ncurses6 \
-            libbz2-1.0:i386 \
-            libzstd1:i386
-
-      - name: Install Android SDK and Build Tools
-        run: |
-          set -e
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          curl --verbose --fail -Lo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          unzip -q sdk-tools.zip -d tmp
-          mkdir -p latest
-          mv tmp/* latest/
-          rm -rf tmp sdk-tools.zip
-
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
-          # Dodajemy instalację NDK, jeśli Buildozer będzie go potrzebował
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" > /dev/null # Wersja NDK jest przykładem, Buildozer może wymagać innej
-          
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list --sdk_root=$HOME/android-sdk
+      # Nie ma potrzeby instalowania Pythona, JDK, ani zależności systemowych,
+      # ponieważ są one już w obrazie Docker.
 
       - name: Install Python dependencies for Buildozer
         run: |
           set -e
-          python -m pip install --upgrade pip
+          # Sprawdzamy, czy pip i buildozer są dostępne w kontenerze
+          python3 -m pip install --upgrade pip
           pip install cython==0.29.36 virtualenv buildozer
 
       - name: Build APK with Buildozer
         run: |
           set -e
+          # Buildozer w kontenerze powinien już mieć skonfigurowane Android SDK i NDK
           yes | buildozer android debug
 
       - name: Upload APK artifact
