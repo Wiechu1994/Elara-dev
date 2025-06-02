@@ -29,7 +29,7 @@ jobs:
           set -e
           sudo apt-get update -qq
           sudo dpkg --add-architecture i386
-          sudo apt-get update -qq
+          sudo apt-get update -qq 
           sudo apt-get install -y --no-install-recommends \
             build-essential \
             ccache \
@@ -44,8 +44,8 @@ jobs:
             lib32z1 \
             libbz2-1.0:i386 \
             libc6:i386 \
-            # Zmieniono libncurses5:i386 na libncursesw5:i386, które jest często bardziej dostępne w nowszych Ubuntu
-            libncursesw5:i386 \
+            # Zmieniono libncurses5:i386 na lib32ncurses6 (często zawiera kompatybilność wsteczną)
+            lib32ncurses6 \
             libstdc++6:i386
 
       - name: Install Android SDK and Build Tools
