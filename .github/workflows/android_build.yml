@@ -7,27 +7,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Przywrócono runs-on, jest wymagane nawet z kontenerem
-    container: ghcr.io/kivy/buildozer:stable
+    runs-on: ubuntu-latest
+    container: ghcr.io/kivy/buildozer:1.6.0 # Zmieniono tag z stable na konkretną wersję
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Nie ma potrzeby instalowania Pythona, JDK, ani zależności systemowych,
-      # ponieważ są one już w obrazie Docker.
-
       - name: Install Python dependencies for Buildozer
         run: |
           set -e
-          # Sprawdzamy, czy pip i buildozer są dostępne w kontenerze
           python3 -m pip install --upgrade pip
           pip install cython==0.29.36 virtualenv buildozer
 
       - name: Build APK with Buildozer
         run: |
           set -e
-          # Buildozer w kontenerze powinien już mieć skonfigurowane Android SDK i NDK
           yes | buildozer android debug
 
       - name: Upload APK artifact
