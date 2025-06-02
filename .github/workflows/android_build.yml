@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04 # Zmiana na starszą wersję Ubuntu dla lepszej kompatybilności z 32-bitowymi zależnościami
+    runs-on: ubuntu-latest # Powrót do ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -41,11 +41,35 @@ jobs:
             liblzma-dev \
             libgl1-mesa-dev \
             curl \
-            lib32z1 \
-            libbz2-1.0:i386 \
+            # Zaktualizowane pakiety 32-bitowe dla ubuntu-latest i NDK
             libc6:i386 \
             libncurses5:i386 \
-            libstdc++6:i386 # Powrót do libncurses5:i386, powinno działać na 20.04
+            libstdc++6:i386 \
+            zlib1g:i386 \
+            # Nowe pakiety często wymagane przez NDK na nowych systemach
+            libgmp-dev \
+            libmpfr-dev \
+            libmpc-dev \
+            libxml2-utils \
+            xsltproc \
+            build-essential \
+            python3 \
+            openjdk-11-jdk \
+            python3-pip \
+            python3-setuptools \
+            python3-wheel \
+            pkg-config \
+            libtool \
+            automake \
+            autoconf \
+            libusb-1.0-0-dev \
+            libglu1-mesa-dev \
+            freeglut3-dev \
+            # Dodatkowe 32-bitowe pakiety, które mogą być potrzebne
+            libtinfo5:i386 \
+            lib32ncurses6 \
+            libbz2-1.0:i386 \
+            libzstd1:i386
 
       - name: Install Android SDK and Build Tools
         run: |
@@ -63,7 +87,9 @@ jobs:
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" > /dev/null
+          # Dodajemy instalację NDK, jeśli Buildozer będzie go potrzebował
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653" > /dev/null # Wersja NDK jest przykładem, Buildozer może wymagać innej
+          
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list --sdk_root=$HOME/android-sdk
 
       - name: Install Python dependencies for Buildozer
@@ -82,4 +108,3 @@ jobs:
         with:
           name: ElaraLite-APK
           path: bin/*.apk
-          
