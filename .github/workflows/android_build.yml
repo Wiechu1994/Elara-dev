@@ -23,6 +23,8 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          # Dodajemy cache dla Gradle, jeśli Twoj projekt go używa, przyspieszy to kolejne buildy
+          cache: gradle
 
       - name: Install system dependencies
         run: |
@@ -36,13 +38,19 @@ jobs:
             git \
             unzip \
             zip \
-            libncurses6 \
+            libncurses5 \
             libstdc++6 \
             libffi-dev \
             libssl-dev \
             liblzma-dev \
             libgl1-mesa-dev \
-            curl
+            curl \
+            # Dodano lib32z1 i libbz2-1.0:i386 często wymagane przez Android SDK na Ubuntu 64-bit
+            lib32z1 \
+            libbz2-1.0:i386 \
+            libc6:i386 \
+            libncurses5:i386 \
+            libstdc++6:i386
           echo "DEBUG: apt-get install finished"
           echo "DEBUG: Verifying curl installation by checking version:"
           curl --version
@@ -55,6 +63,7 @@ jobs:
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
           echo "DEBUG: Downloading Android SDK tools..."
+          # Zapewnienie, że URL jest poprawny i zawsze najnowszy dla command-line tools
           curl --verbose --fail -Lo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
           echo "DEBUG: Download command finished. Unzipping..."
           unzip -q sdk-tools.zip -d tmp
@@ -69,8 +78,13 @@ jobs:
 
           echo "DEBUG: Accepting Android SDK licenses..."
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
+          
           echo "DEBUG: Installing SDK components (platform-tools, platforms, build-tools)..."
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" > /dev/null
+          
+          # Dodany krok do listowania zainstalowanych komponentów SDK (dla debugowania)
+          echo "DEBUG: Listing installed Android SDK components:"
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list --sdk_root=$HOME/android-sdk
           echo "DEBUG: Android SDK setup complete."
 
       - name: Install Python dependencies for Buildozer
@@ -78,6 +92,7 @@ jobs:
           set -e
           echo "DEBUG: Installing Python dependencies for Buildozer"
           python -m pip install --upgrade pip
+          # Jeśli masz konkretną wersję buildozera, która działa, użyj jej, np. buildozer==1.2.0
           pip install cython==0.29.36 virtualenv buildozer
           echo "DEBUG: Buildozer dependencies installed."
 
@@ -85,6 +100,7 @@ jobs:
         run: |
           set -e
           echo "DEBUG: Starting Buildozer APK build"
+          # Upewnij się, że plik buildozer.spec istnieje i jest poprawny w głównym katalogu
           yes | buildozer android debug
           echo "DEBUG: Buildozer APK build finished."
 
