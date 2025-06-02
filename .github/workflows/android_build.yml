@@ -7,15 +7,12 @@ on:
 
 jobs:
   build:
-    # Używamy obrazu Docker, który ma prekonfigurowane środowisko Buildozer
-    # To omija problemy z ręczną instalacją 32-bitowych zależności
+    runs-on: ubuntu-latest # Przywrócono runs-on, jest wymagane nawet z kontenerem
     container: ghcr.io/kivy/buildozer:stable
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        # Ważne: Jeśli używasz kontenera, checkout musi działać w jego kontekście
-        # Domyślnie actions/checkout działa na hostcie, więc to jest poprawne.
 
       # Nie ma potrzeby instalowania Pythona, JDK, ani zależności systemowych,
       # ponieważ są one już w obrazie Docker.
