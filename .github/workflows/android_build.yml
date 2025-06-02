@@ -27,16 +27,9 @@ jobs:
       - name: Install system dependencies
         run: |
           set -e
-          echo "DEBUG: Starting system dependencies installation"
           sudo apt-get update -qq
-          echo "DEBUG: apt-get update finished"
-          
-          # Dodajemy architekturę i386 i aktualizujemy apt
-          echo "DEBUG: Adding i386 architecture and updating apt for 32-bit packages."
           sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          echo "DEBUG: apt-get update after adding i386 finished."
-
           sudo apt-get install -y --no-install-recommends \
             build-essential \
             ccache \
@@ -51,59 +44,43 @@ jobs:
             lib32z1 \
             libbz2-1.0:i386 \
             libc6:i386 \
-            libncurses5:i386 \
+            # Zmieniono libncurses5:i386 na libncursesw5:i386, które jest często bardziej dostępne w nowszych Ubuntu
+            libncursesw5:i386 \
             libstdc++6:i386
-          echo "DEBUG: apt-get install finished"
-          echo "DEBUG: Verifying curl installation by checking version:"
-          curl --version
-          echo "DEBUG: End of system dependencies install script"
 
       - name: Install Android SDK and Build Tools
         run: |
           set -e
-          echo "DEBUG: Starting Android SDK and Build Tools installation"
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          echo "DEBUG: Downloading Android SDK tools..."
           curl --verbose --fail -Lo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          echo "DEBUG: Download command finished. Unzipping..."
           unzip -q sdk-tools.zip -d tmp
           mkdir -p latest
           mv tmp/* latest/
           rm -rf tmp sdk-tools.zip
-          echo "DEBUG: Android SDK tools installed in $HOME/android-sdk/cmdline-tools/latest"
 
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-          echo "DEBUG: Accepting Android SDK licenses..."
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
-          
-          echo "DEBUG: Installing SDK components (platform-tools, platforms, build-tools)..."
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" > /dev/null
-          
-          echo "DEBUG: Listing installed Android SDK components:"
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --list --sdk_root=$HOME/android-sdk
-          echo "DEBUG: Android SDK setup complete."
 
       - name: Install Python dependencies for Buildozer
         run: |
           set -e
-          echo "DEBUG: Installing Python dependencies for Buildozer"
           python -m pip install --upgrade pip
           pip install cython==0.29.36 virtualenv buildozer
-          echo "DEBUG: Buildozer dependencies installed."
 
       - name: Build APK with Buildozer
         run: |
           set -e
-          echo "DEBUG: Starting Buildozer APK build"
           yes | buildozer android debug
-          echo "DEBUG: Buildozer APK build finished."
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: ElaraLite-APK
           path: bin/*.apk
+          
