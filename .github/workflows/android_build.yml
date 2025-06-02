@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04 # Zmiana na starszą wersję Ubuntu dla lepszej kompatybilności z 32-bitowymi zależnościami
 
     steps:
       - name: Checkout repository
@@ -44,9 +44,8 @@ jobs:
             lib32z1 \
             libbz2-1.0:i386 \
             libc6:i386 \
-            # Zmieniono libncurses5:i386 na lib32ncurses6 (często zawiera kompatybilność wsteczną)
-            lib32ncurses6 \
-            libstdc++6:i386
+            libncurses5:i386 \
+            libstdc++6:i386 # Powrót do libncurses5:i386, powinno działać na 20.04
 
       - name: Install Android SDK and Build Tools
         run: |
