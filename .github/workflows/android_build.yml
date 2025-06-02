@@ -33,37 +33,36 @@ jobs:
             libssl-dev \
             liblzma-dev \
             libgl1-mesa-dev \
-            # openjdk-17-jdk Zostało usunięte stąd
             curl
 
-      - name: Set up JDK 17 # NOWY KROK do konfiguracji Javy
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin' # 'temurin' to popularny i zalecany wybór (dawniej AdoptOpenJDK)
+          distribution: 'temurin'
 
       - name: Install Android SDK and Build Tools
         run: |
-          # Tworzenie katalogów i pobieranie narzędzi command-line tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          # Dodano -L do curl dla obsługi przekierowań
-          curl -Lo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+          echo "Attempting to download Android SDK tools..."
+          curl --verbose --fail -Lo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+          echo "Download command finished. Unzipping..."
           unzip sdk-tools.zip -d tmp
           mkdir -p latest
           mv tmp/* latest/
           rm -rf tmp sdk-tools.zip
+          echo "Android SDK tools installed in $HOME/android-sdk/cmdline-tools/latest"
 
-          # Ustawianie kluczowych zmiennych środowiskowych dla Android SDK
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          # echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV # ANDROID_HOME jest często redundantne, jeśli ANDROID_SDK_ROOT jest ustawione
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-          # Automatyczna akceptacja licencji SDK i instalacja potrzebnych komponentów SDK
+          echo "Accepting Android SDK licenses..."
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null
+          echo "Installing SDK components..."
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-33" "build-tools;33.0.2" > /dev/null
-        # Usunięto 'env: JAVA_HOME: ...' ponieważ actions/setup-java powinno to skonfigurować globalnie
+          echo "Android SDK setup complete."
 
       - name: Install Python dependencies for Buildozer
         run: |
