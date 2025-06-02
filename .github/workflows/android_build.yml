@@ -23,8 +23,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          # USUNIĘTO: cache: gradle - ta opcja powoduje błąd, jeśli pliki Gradle nie istnieją w repozytorium
-          # lub ich ścieżki nie pasują do oczekiwanych przez akcję.
 
       - name: Install system dependencies
         run: |
@@ -32,14 +30,19 @@ jobs:
           echo "DEBUG: Starting system dependencies installation"
           sudo apt-get update -qq
           echo "DEBUG: apt-get update finished"
+          
+          # Dodajemy architekturę i386 i aktualizujemy apt
+          echo "DEBUG: Adding i386 architecture and updating apt for 32-bit packages."
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -qq
+          echo "DEBUG: apt-get update after adding i386 finished."
+
           sudo apt-get install -y --no-install-recommends \
             build-essential \
             ccache \
             git \
             unzip \
             zip \
-            libncurses5 \
-            libstdc++6 \
             libffi-dev \
             libssl-dev \
             liblzma-dev \
